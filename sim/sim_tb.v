@@ -1,5 +1,4 @@
 `timescale 1ns/100ps
-`include "top.v"
 
 module sim_tb();
     reg clk_50;
@@ -28,15 +27,15 @@ module sim_tb();
     initial begin
         clk_50 = 1;
         RSTn = 0;
-        #20 RSTn <= 1;
         top_valid = 0;
+        #20 RSTn <= 1;
 
         #120 top_valid <= 1;
         #50000 $finish;
     end
 
     initial begin
-        $dumpfile("wave.vcd");
+        $dumpfile("./sim_result/wave.vcd");
         $dumpvars(0, sim_tb);
     end
 

@@ -6,12 +6,30 @@ module bus(
         input	wire	top_valid	,
         output	wire	bus_ready	,
 
-        input	wire	spi_ready,
-        output	wire	tx_valid,
+        input	wire	spi_ready   ,
+        output	wire	bus_valid   ,
         output	wire[23:0] BUS_DATA
     );
     reg  [23:0] DATA_BUFFER;
     reg data_status;
+
+    //detect spi_ready_negedge
+    reg spi_ready_q1;
+    reg spi_ready_q0;
+
+    always @ (posedge clk or negedge RSTn) begin
+        if (!RSTn) begin
+            spi_ready_q1 <= 1'b0;
+            spi_ready_q0 <= 1'b0;
+        end
+        else begin
+            spi_ready_q0 <= spi_ready;
+            spi_ready_q1 <= spi_ready_q0;
+        end
+    end
+
+    wire    spi_ready_negedge;
+    assign spi_ready_negedge = spi_ready_q1 && !spi_ready_q0;
 
     //bus buffer refresh
     always @ (posedge clk or negedge RSTn) begin
@@ -37,7 +55,7 @@ module bus(
                     data_status <= top_valid ? 1'b1 :1'b0;
                 end
                 1'b1 : begin
-                    data_status <= spi_ready ? (top_valid ? 1'b1 : 1'b0) : data_status;
+                    data_status <= spi_ready_negedge ? (top_valid ? 1'b1 : 1'b0) : data_status;
                 end
                 default : begin
                     data_status <= data_status;
@@ -47,13 +65,13 @@ module bus(
     end
 
     //bus ready
-    assign bus_ready = (!data_status) || spi_ready;
+    assign bus_ready = (!data_status) || spi_ready_negedge;
 
     //tx valid
-    assign tx_valid = data_status;
+    assign bus_valid = data_status;
 
     //BUS_DATA
-    assign BUS_DATA = tx_valid ? DATA_BUFFER : 24'd0;
+    assign BUS_DATA = bus_valid ? DATA_BUFFER : 24'd0;
 
 
 endmodule

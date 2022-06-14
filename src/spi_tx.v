@@ -6,7 +6,7 @@ module spi_tx(
         input	wire	RSTn		,
 
         input	wire[23:0]BUS_DATA	,
-        input	wire	tx_valid	,
+        input	wire	bus_valid	,
         output	wire	spi_ready	,
 
         output	wire	spi_cs		,
@@ -31,7 +31,7 @@ module spi_tx(
         if(!RSTn) begin
             DATA_BUFFER <= 24'd0;
         end
-        else if(spi_ready && tx_valid) begin
+        else if(spi_ready && bus_valid) begin
             DATA_BUFFER <= BUS_DATA;
         end
         else begin
@@ -106,7 +106,7 @@ module spi_tx(
     always @ (*) begin
         case(cur_sta)
             ST_IDLE : begin
-                nxt_sta = tx_valid ? ST_W :ST_IDLE;
+                nxt_sta = bus_valid ? ST_W :ST_IDLE;
             end
             ST_W    : begin
                 nxt_sta =(data_cnt == 5'd24 && sclk_cnt == 5'd10) ? ST_WAIT :ST_W;
